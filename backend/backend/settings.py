@@ -134,7 +134,9 @@ AUTH_USER_MODEL = 'users.CustomUser'
 
 # STATIC_ROOT = BASE_DIR / 'collected_static'
 
-STATIC_ROOT = '/app/static/'
+# STATIC_ROOT = '/app/static/'
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'collected_static')
 
 MEDIA_URL = '/media/'
 

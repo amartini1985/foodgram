@@ -10,21 +10,22 @@ services:
     env_file: .env
     volumes:
       - pg_data:/var/lib/postgresql/data
-  frontend:
-    env_file: .env
-    image: amartini1985/foodgram_frontend
-    volumes:
-      - ./frontend/:/app/result_build/
-      - static:/frontend/
 
   backend:
     env_file: .env
     image: amartini1985/foodgram_backend
     volumes:
+      - static:/app/collected_static
       - media:/var/www/backend/media
-      - static:/app/static
     depends_on:
       - db 
+
+  frontend:
+    env_file: .env
+    image: amartini1985/foodgram_frontend
+    command: cp -r /app/build/. /static/
+    volumes:
+      - static:/static
 
   nginx:
     env_file: .env
@@ -35,9 +36,7 @@ services:
     volumes:
       - static:/static
       - media:/var/www/backend/media
-      - ./docs/:/usr/share/nginx/html/api/docs/
-      - ./docs/:/static
-      - ./infra/nginx.conf:/static
-      - ./frontend/build:/static
+      - ../frontend/build:/usr/share/nginx/html
+      - ../docs/:/usr/share/nginx/html/api/docs/
     depends_on:
       - backend

@@ -1,4 +1,4 @@
-"""Модуль для загрузки csv файлов."""
+"""Модуль для загрузки csv файлов!."""
 import csv
 import os
 from django.conf import settings

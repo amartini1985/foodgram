@@ -33,7 +33,7 @@ services:
   nginx:
     env_file: .env
     container_name: foodgram-proxy
-    build: ./infra/
+    build: ./nginx/
     ports:
       - "80:80"
     volumes:
@@ -41,7 +41,7 @@ services:
       - media:/var/www/backend/media
       - ./docs/:/usr/share/nginx/html/api/docs/
       - ./docs/:/static
-      - ./infra/nginx.conf:/static
+      - ./nginx/nginx.conf:/static
       - ./frontend/build:/static
 
 

@@ -18,7 +18,6 @@ from api.base_views import TagIngredientBaseViewSet
 from api.filters import RecipeFilter
 from api.permissions import IsAuthorOrReadOnly
 from recipes.models import (
-
     FavoriteRecipe,
     Ingredient,
     Recipe,

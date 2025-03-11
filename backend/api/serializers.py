@@ -1,4 +1,5 @@
 import base64
+
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
@@ -97,11 +98,11 @@ class EmailAuthTokenSerializer(serializers.Serializer):
             user = get_object_or_404(User, email=email)
             if not user or not user.check_password(password):
                 print('_________________')
-                message = ('Неверный email или password')
-                raise serializers.ValidationError(message, code='authorization')
+                msg = ('Неверный email или password')
+                raise serializers.ValidationError(msg, code='authorization')
         else:
-            message = ('Отсутсвуют данные в поле email или password')
-            raise serializers.ValidationError(message, code='authorization')
+            msg = ('Отсутсвуют данные в поле email или password')
+            raise serializers.ValidationError(msg, code='authorization')
         data['user'] = user
         return data
 

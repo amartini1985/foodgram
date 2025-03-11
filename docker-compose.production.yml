@@ -22,7 +22,7 @@ services:
     image: amartini1985/foodgram_backend
     volumes:
       - media:/var/www/backend/media
-      - static:/static
+      - static:/app/static
     depends_on:
       - db 
 
@@ -31,7 +31,7 @@ services:
     container_name: foodgram-proxy
     image: amartini1985/foodgram_nginx
     ports:
-      - "80:80"
+      - "8000:80"
     volumes:
       - static:/static
       - media:/var/www/backend/media

@@ -8,11 +8,7 @@ class RecipeFilter(filters.FilterSet):
         field_name='author__id',
         lookup_expr='icontains'
     )
-    tags = filters.CharFilter(
-        field_name="tags__slug",
-        lookup_expr='icontains'
-    )
-
+    
     class Meta:
         model = Recipe
-        fields = ['author', 'tags']
+        fields = ['author',]

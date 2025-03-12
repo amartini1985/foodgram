@@ -41,6 +41,7 @@ from api.serializers import (
     UserSubscribeSerializers,
     UserSubscribeWithRecipesCountSerializer
 )
+from django.db.models import Q
 
 User = get_user_model()
 
@@ -87,10 +88,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'is_favorited', None)
         is_in_shopping_cart = self.request.query_params.get(
             'is_in_shopping_cart', None)
+        tags = self.request.query_params.getlist(
+            'tags', None)
         if is_favorited == '1':
             queryset = queryset.filter(favorites__user=user)
         if is_in_shopping_cart == '1':
             queryset = queryset.filter(shopping__user=user)
+        if tags is not None:
+            conditions = [Q(tags__slug=tag) for tag in tags]
+        # Объединяем условия OR
+            query = conditions.pop() if conditions else Q()
+            for condition in conditions:
+                query |= condition
+        # Применяем фильтрацию
+                queryset = queryset.filter(query).distinct()
         return queryset
 
     def create(self, request, *args, **kwargs):

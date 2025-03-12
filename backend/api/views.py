@@ -1,8 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
-from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
@@ -41,7 +42,6 @@ from api.serializers import (
     UserSubscribeSerializers,
     UserSubscribeWithRecipesCountSerializer
 )
-from django.db.models import Q
 
 User = get_user_model()
 
@@ -96,11 +96,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(shopping__user=user)
         if tags is not None:
             conditions = [Q(tags__slug=tag) for tag in tags]
-        # Объединяем условия OR
             query = conditions.pop() if conditions else Q()
             for condition in conditions:
                 query |= condition
-        # Применяем фильтрацию
             queryset = queryset.filter(query).distinct()
         return queryset
 

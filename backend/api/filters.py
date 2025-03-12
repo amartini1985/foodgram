@@ -11,4 +11,4 @@ class RecipeFilter(filters.FilterSet):
 
     class Meta:
         model = Recipe
-        fields = ['author',]
+        fields = ['author']

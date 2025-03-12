@@ -8,5 +8,5 @@ class TagIngredientBaseViewSet(
     """Базовое представление для меток и ингредиентов """
 
     filter_backends = (filters.SearchFilter,)
-    search_fields = ('name',)
+    search_fields = ('^name',)
     pagination_class = None

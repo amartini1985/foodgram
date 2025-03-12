@@ -28,5 +28,6 @@ class CustomUser(AbstractUser):
 
     class Meta:
         """Класс Meta."""
-
+        verbose_name = 'пользователь'
+        verbose_name_plural = 'Пользователи'
         ordering = ['username']

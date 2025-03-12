@@ -101,7 +101,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             for condition in conditions:
                 query |= condition
         # Применяем фильтрацию
-                queryset = queryset.filter(query).distinct()
+            queryset = queryset.filter(query).distinct()
         return queryset
 
     def create(self, request, *args, **kwargs):

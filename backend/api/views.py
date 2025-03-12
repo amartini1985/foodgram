@@ -16,6 +16,7 @@ from rest_framework.views import APIView
 
 from api.base_views import TagIngredientBaseViewSet
 from api.filters import RecipeFilter
+from api.pagination import RecipePagination
 from api.permissions import IsAuthorOrReadOnly
 from recipes.models import (
     FavoriteRecipe,
@@ -64,6 +65,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
+    pagination_class = RecipePagination
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
@@ -344,12 +346,12 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response({'detail': 'Вы отписались от пользователя'},
                         status=status.HTTP_204_NO_CONTENT)
 
-    def get_recipes_limit(request):
+    def get_recipes_limit(self, request):
         """Вспомогательная функция для сокращения длины строки"""
         return request.query_params.get('recipes_limit')
 
     @action(detail=False, methods=['get'],
-            permission_classes=[IsAuthenticated])
+            permission_classes=[IsAuthenticated], )
     def subscriptions(self, request):
         """Список подписок."""
         user = request.user

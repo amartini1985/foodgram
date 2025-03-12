@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+from django.core.management.utils import get_random_secret_key
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,13 +14,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '7+ya*^8py02k#n)v=s=qc2&b_h=c_l&zb#piuc2*$2*^os@&vh'
+SECRET_KEY = os.getenv('SECRET_KEY', get_random_secret_key())
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False').lower() == "true"
 
 ALLOWED_HOSTS = ['158.160.74.166', 'localhost', '127.0.0.1', 'foodgramm.ddnsking.com']
-
 
 # Application definition
 

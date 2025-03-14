@@ -17,11 +17,9 @@ router.register('users', UserViewSet, basename='users')
 router.register('tags', TagViewSet, basename='tags')
 
 urlpatterns = [
-    path('auth/token/login/',
-         ObtainAuthTokenView.as_view(),
+    path('auth/token/login/', ObtainAuthTokenView.as_view(),
          name='token_obtain_pair'),
-    path('auth/token/logout/',
-         LogoutView.as_view(),
+    path('auth/token/logout/', LogoutView.as_view(),
          name='token_logout'),
     path('', include(router.urls))
 

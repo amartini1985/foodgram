@@ -65,7 +65,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
-
+"""
 DATABASES = {
     'default': {
         # Меняем настройку Django: теперь для работы будет использоваться
@@ -85,7 +85,7 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-"""
+
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
 
@@ -125,11 +125,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-AUTH_USER_MODEL = 'users.CustomUser'
-
-# STATIC_ROOT = BASE_DIR / 'collected_static'
-
-# STATIC_ROOT = '/app/static/'
+AUTH_USER_MODEL = 'users.Chef'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'collected_static')
 
@@ -137,9 +133,8 @@ MEDIA_URL = '/media/'
 
 MEDIA_ROOT = '/var/www/backend/media/'
 
-# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
 REST_FRAMEWORK = {
+    'EXCEPTION_HANDLER': 'api.utils.custom_exception_handler',
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],

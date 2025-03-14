@@ -4,7 +4,7 @@ import os
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
-from django.db import IntegrityError
+
 from recipes.models import Ingredient, Tag
 
 
@@ -22,37 +22,38 @@ class Command(BaseCommand):
     def import_ingredients(self, data_dir):
         """Импортирует ингредиенты."""
         ingredients_file = os.path.join(data_dir, 'ingredients.csv')
+        ingredients_to_create = []
         with open(ingredients_file, mode='r', encoding='utf-8') as file:
             reader = csv.DictReader(file)
             for row in reader:
-                try:
-                    Ingredient.objects.get_or_create(
-                        name=row['name'],
-                        measurement_unit=row['measurement_unit']
-                    )
-                    self.stdout.write(self.style.SUCCESS(
-                        f"Ингредиент {row['name']} загружен")
-                    )
-                except IntegrityError:
-                    self.stdout.write(self.style.WARNING(
-                        f"Ингредиент {row['name']} уже существует")
-                    )
+                ingredient_data = {
+                    'name': row['name'],
+                    'measurement_unit': row['measurement_unit']
+                }
+                ingredients_to_create.append(Ingredient(**ingredient_data))
+        try:
+            Ingredient.objects.bulk_create(
+                ingredients_to_create, ignore_conflicts=True)
+            self.stdout.write(self.style.SUCCESS('Все ингредиенты загружены'))
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(
+                f'Произошла ошибка при загрузке ингредиентов: {e}'))
 
     def import_tags(self, data_dir):
         """Импортирует метки."""
         tags_file = os.path.join(data_dir, 'tags.csv')
+        tags_to_create = []
         with open(tags_file, mode='r', encoding='utf-8') as file:
             reader = csv.DictReader(file)
             for row in reader:
-                try:
-                    Tag.objects.get_or_create(
-                        name=row['name'],
-                        slug=row['slug']
-                    )
-                    self.stdout.write(self.style.SUCCESS(
-                        f"Метка {row['name']} загружена")
-                    )
-                except IntegrityError:
-                    self.stdout.write(self.style.WARNING(
-                        f"Метка {row['name']} уже существует")
-                    )
+                tags_data = {
+                    'name': row['name'],
+                    'slug': row['slug']
+                }
+                tags_to_create.append(Tag(**tags_data))
+        try:
+            Tag.objects.bulk_create(tags_to_create, ignore_conflicts=True)
+            self.stdout.write(self.style.SUCCESS('Все метки загружены'))
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(
+                f'Произошла ошибка при загрузке меток: {e}'))

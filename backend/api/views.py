@@ -1,6 +1,5 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
-from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django_filters.rest_framework import DjangoFilterBackend
@@ -29,10 +28,11 @@ from api.serializers import (
     AvatarSerializer,
     CustomUserCreateSerializer,
     EmailAuthTokenSerializer,
+    FavoriteSerializer,
     IngredientSerializer,
     RecipeReadSerializer,
     RecipeWriteSerializer,
-    ShortRecipeReadSerializer,
+    ShoppingcartSerializer,
     TagSerializer,
     UserSerializer,
     UserSubscribeWithRecipesCountSerializer
@@ -80,32 +80,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        user = self.request.user
-        tags = self.request.query_params.getlist(
-            'tags', None)
-        if tags is not None:
-            conditions = [Q(tags__slug=tag) for tag in tags]
-            query = conditions.pop() if conditions else Q()
-            for condition in conditions:
-                query |= condition
-            queryset = queryset.filter(query).distinct()
-        if not user.is_authenticated:
-            return queryset
-        is_favorited = self.request.query_params.get(
-            'is_favorited', None)
-        is_in_shopping_cart = self.request.query_params.get(
-            'is_in_shopping_cart', None)
-        if is_favorited == '1':
-            queryset = queryset.filter(favoriterecipe__user=user)
-        if is_in_shopping_cart == '1':
-            queryset = queryset.filter(shoppingcartrecipe__user=user)
-        return queryset
+        filter_set = RecipeFilter(
+            self.request.GET, queryset=queryset, request=self.request)
+        return filter_set.qs.distinct()
 
-    def all_unique(self, iterable):
+    def all_unique(self, data):
         """Проверяет, все ли элементы в последовательности уникальные."""
-        return len(iterable) == len(set(iterable))
+        return len(data) == len(set(data))
 
     def all_unique_dicts(self, items):
+        """Проверяет, все ли элементы в словаре уникальные."""
         seen = set()
         for item in items:
             frozen_item = tuple(sorted(item.items()))
@@ -188,50 +172,38 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post', 'delete'], url_path='favorite')
     def favorite(self, request, pk=None):
         """Добавление рецепта в избранные"""
-        recipe = get_object_or_404(Recipe, pk=pk)
         user = request.user
+        recipe = get_object_or_404(Recipe, pk=pk)
+        data = {'user': user.username, 'recipe': recipe.id}
         if request.method == 'POST':
-            if FavoriteRecipe.objects.filter(
-                user=user,
-                recipe=recipe
-            ).exists():
-                return Response({'detail': 'Рецепт уже добавлен в избранные'},
-                                status=status.HTTP_400_BAD_REQUEST)
-            FavoriteRecipe.objects.create(user=user, recipe=recipe)
-            serializer = ShortRecipeReadSerializer(recipe)
-            return Response(serializer.data,
-                            status=status.HTTP_201_CREATED)
-        favorite_recipe = FavoriteRecipe.objects.filter(
-            user=user, recipe=recipe)
-        if not favorite_recipe.exists():
+            serializer = FavoriteSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        fav_recipe = FavoriteRecipe.objects.filter(user=user, recipe=recipe)
+        if not fav_recipe.exists():
             return Response({'detail': 'Рецепт не найден в избранном'},
                             status=status.HTTP_400_BAD_REQUEST)
-        favorite_recipe.delete()
+        fav_recipe.delete()
         return Response({'detail': 'Рецепт удален из избранного'},
                         status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['post', 'delete'], url_path='shopping_cart')
     def shopping_cart(self, request, pk=None):
         """Добавление рецпта в список покупок"""
-        recipe = self.get_object()
+        recipe = get_object_or_404(Recipe, pk=pk)
         user = request.user
+        data = {'user': user.username, 'recipe': recipe.id}
         if request.method == 'POST':
-            if ShoppingcartRecipe.objects.filter(user=user,
-                                                 recipe=recipe).exists():
-                return Response({'detail': 'Рецепт уже добавлен в корзину'},
-                                status=status.HTTP_400_BAD_REQUEST)
-            ShoppingcartRecipe.objects.create(user=user, recipe=recipe)
-            serializer = ShortRecipeReadSerializer(recipe)
-            return Response(serializer.data,
-                            status=status.HTTP_201_CREATED)
-        shopping_cart_recipe = ShoppingcartRecipe.objects.filter(
-            user=user,
-            recipe=recipe
-        )
-        if not shopping_cart_recipe.exists():
-            return Response({'detail': 'Рецепт не найден в корзину'},
+            serializer = ShoppingcartSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        shop_cart = ShoppingcartRecipe.objects.filter(user=user, recipe=recipe)
+        if not shop_cart.exists():
+            return Response({'detail': 'Рецепт не найден в корзине'},
                             status=status.HTTP_400_BAD_REQUEST)
-        shopping_cart_recipe.delete()
+        shop_cart.delete()
         return Response({'detail': 'Рецепт удален из корзины'},
                         status=status.HTTP_204_NO_CONTENT)
 
@@ -286,12 +258,10 @@ class ObtainAuthTokenView(APIView):
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            user = serializer.validated_data['user']
-            token, created = Token.objects.get_or_create(user=user)
-            return Response({'auth_token': token.key},
-                            status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({'auth_token': token.key}, status=status.HTTP_200_OK)
 
 
 class LogoutView(APIView):
@@ -335,12 +305,10 @@ class UserViewSet(viewsets.ModelViewSet):
         user = request.user
         if request.method == 'PUT':
             serializer = AvatarSerializer(user, data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response({"avatar": serializer.data['avatar']},
-                                status=status.HTTP_200_OK)
-            return Response(serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response({"avatar": serializer.data['avatar']},
+                            status=status.HTTP_200_OK)
         user.avatar = None
         user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -349,16 +317,15 @@ class UserViewSet(viewsets.ModelViewSet):
             permission_classes=[IsAuthenticated])
     def set_password(self, request):
         """Смена пароля текущего пользователя."""
-        data = request.data
-        old_password = data.get('current_password')
-        new_password = data.get('new_password')
         user = request.user
+        old_password = request.data.get('current_password')
+        new_password = request.data.get('new_password')
         if not user.check_password(old_password):
-            return Response({"error": "Неверный старый пароль."},
+            return Response({"detail": "Неверный старый пароль."},
                             status=status.HTTP_400_BAD_REQUEST)
         user.password = make_password(new_password)
         user.save()
-        return Response({"success": "Пароль успешно обновлен."},
+        return Response({"detail": "Пароль успешно обновлен."},
                         status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['post', 'delete'],

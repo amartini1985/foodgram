@@ -8,9 +8,11 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.validators import UniqueTogetherValidator
 
 from recipes.models import (
+    FavoriteRecipe,
     Ingredient,
     Recipe,
     RecipeIngredient,
+    ShoppingcartRecipe,
     Tag
 )
 from users.models import Subscription
@@ -206,6 +208,16 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return RecipeReadSerializer(instance).data
 
 
+class ShortRecipeReadSerializer(serializers.ModelSerializer):
+    """Сериализатор для коротких данных о рецепте."""
+    image = Base64ImageField(required=False, allow_null=True)
+
+    class Meta:
+        model = Recipe
+        fields = ["id", "name", 'image', "cooking_time"]
+        read_only_fields = fields
+
+
 class SubscriptionSerializer(serializers.ModelSerializer):
     """Сериализатор для подписок."""
     user = serializers.SlugRelatedField(
@@ -231,14 +243,51 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         ]
 
 
-class ShortRecipeReadSerializer(serializers.ModelSerializer):
-    """Сериализатор для коротких данных о рецепте."""
-    image = Base64ImageField(required=False, allow_null=True)
+class BaseRecipeSerializer(serializers.ModelSerializer):
+    """Базовый сериализатор для избранных и корзины."""
+    user = serializers.SlugRelatedField(
+        slug_field='username',
+        queryset=User.objects.all()
+    )
+    recipe = serializers.SlugRelatedField(
+        slug_field='id',
+        queryset=Recipe.objects.all()
+    )
 
     class Meta:
-        model = Recipe
-        fields = ["id", "name", 'image', "cooking_time"]
-        read_only_fields = fields
+        abstract = True
+        fields = ['user', 'recipe']
+
+    def to_representation(self, instance):
+        print(instance.recipe)
+        return ShortRecipeReadSerializer(instance.recipe,
+                                         context=self.context).data
+
+
+class FavoriteSerializer(BaseRecipeSerializer):
+    """Сериализатор для избранных."""
+    class Meta(BaseRecipeSerializer.Meta):
+        model = FavoriteRecipe
+        validators = [
+            UniqueTogetherValidator(
+                queryset=FavoriteRecipe.objects.all(),
+                fields=('user', 'recipe'),
+                message="Вы уже добавили этот рецепт в избранные."
+            )
+        ]
+
+
+class ShoppingcartSerializer(BaseRecipeSerializer):
+    """Сериализатор для корзины."""
+    class Meta(BaseRecipeSerializer.Meta):
+        model = ShoppingcartRecipe
+        validators = [
+            UniqueTogetherValidator(
+                queryset=ShoppingcartRecipe.objects.all(),
+                fields=('user', 'recipe'),
+                message="Вы уже добавили этот рецепт в корзину."
+            )
+        ]
 
 
 class UserSubscribeWithRecipesCountSerializer(serializers.Serializer):

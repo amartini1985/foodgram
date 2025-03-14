@@ -81,24 +81,24 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         user = self.request.user
-        if not user.is_authenticated:
-            return queryset
-        is_favorited = self.request.query_params.get(
-            'is_favorited', None)
-        is_in_shopping_cart = self.request.query_params.get(
-            'is_in_shopping_cart', None)
         tags = self.request.query_params.getlist(
             'tags', None)
-        if is_favorited == '1':
-            queryset = queryset.filter(favoriterecipe__user=user)
-        if is_in_shopping_cart == '1':
-            queryset = queryset.filter(shoppingcartrecipe__user=user)
         if tags is not None:
             conditions = [Q(tags__slug=tag) for tag in tags]
             query = conditions.pop() if conditions else Q()
             for condition in conditions:
                 query |= condition
             queryset = queryset.filter(query).distinct()
+        if not user.is_authenticated:
+            return queryset
+        is_favorited = self.request.query_params.get(
+            'is_favorited', None)
+        is_in_shopping_cart = self.request.query_params.get(
+            'is_in_shopping_cart', None)
+        if is_favorited == '1':
+            queryset = queryset.filter(favoriterecipe__user=user)
+        if is_in_shopping_cart == '1':
+            queryset = queryset.filter(shoppingcartrecipe__user=user)
         return queryset
 
     def all_unique(self, iterable):

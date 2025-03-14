@@ -156,7 +156,7 @@ class RecipeIngredient(models.Model):
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     amount = models.PositiveIntegerField('Количество', validators=[
         MinValueValidator(MIN_AMOUNT),
-        MaxValueValidator(MAX_AMOUNT),]
+        MaxValueValidator(MAX_AMOUNT)]
     )
 
     class Meta:

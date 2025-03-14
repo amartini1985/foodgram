@@ -104,7 +104,7 @@ class Recipe(models.Model):
         blank=False, null=False,
         validators=[
             MinValueValidator(MIN_TIME),
-            MaxValueValidator(MAX_TIME),]
+            MaxValueValidator(MAX_TIME)]
     )
     pub_date = models.DateTimeField('Дата пуликации', auto_now_add=True)
     short_code = models.CharField(max_length=8, unique=True)

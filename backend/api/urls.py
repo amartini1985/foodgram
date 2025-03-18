@@ -1,10 +1,8 @@
-from django.urls import include, path
+from django.urls import include, path, re_path
 from rest_framework import routers
 
 from api.views import (
     IngredientViewSet,
-    LogoutView,
-    ObtainAuthTokenView,
     RecipeViewSet,
     TagViewSet,
     UserViewSet
@@ -17,10 +15,8 @@ router.register('users', UserViewSet, basename='users')
 router.register('tags', TagViewSet, basename='tags')
 
 urlpatterns = [
-    path('auth/token/login/', ObtainAuthTokenView.as_view(),
-         name='token_obtain_pair'),
-    path('auth/token/logout/', LogoutView.as_view(),
-         name='token_logout'),
+    re_path(r'^auth/', include('djoser.urls')),
+    re_path(r'^auth/', include('djoser.urls.authtoken')),
     path('', include(router.urls))
 
 ]

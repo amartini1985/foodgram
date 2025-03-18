@@ -3,7 +3,6 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import ValidationError
 from django.db import models
 
-
 from users.constants import (
     MAX_LENGTH_EMAIL,
     MAX_LENGTH_USERNAME,
@@ -65,6 +64,10 @@ class Subscription(models.Model):
         verbose_name = 'подписка'
         verbose_name_plural = 'Подписки'
         constraints = (
+            models.CheckConstraint(
+                check=~models.Q(user=models.F('following')),
+                name='deny_self_subscription'
+            ),
             models.UniqueConstraint(
                 fields=('user', 'following'),
                 name='unique_user_following'

@@ -1,15 +1,18 @@
 from django.contrib import admin
+from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
 
-from users.models import Chef, Subscription
+from users.models import Subscription
+
+User = get_user_model()
 
 
-@admin.register(Chef)
-class ChefAdmin(UserAdmin):
+@admin.register(User)
+class UserAdmin(UserAdmin):
     """Настройки админки для модели ModifiedUser."""
 
-    model = Chef
+    model = User
     admin.site.unregister(Group)
     list_display = (
         'username', 'email', 'first_name', 'last_name')

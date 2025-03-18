@@ -36,12 +36,6 @@ class Tag(models.Model):
     class Meta:
         verbose_name = 'метка'
         verbose_name_plural = 'Метки'
-        constraints = (
-            models.UniqueConstraint(
-                fields=('name', 'slug'),
-                name='unique_name_slug'
-            ),
-        )
 
     def __str__(self):
         return self.name[:RETURN_TEXT_LEN]
@@ -88,20 +82,16 @@ class Recipe(models.Model):
     )
     image = models.ImageField(
         upload_to='recipes/images',
-        blank=False,
-        null=False,
         default=None
     )
     name = models.CharField(
         max_length=MAX_LENGTH_NAME_RECIPE,
-        blank=False,
-        null=False,
+
         verbose_name='Название'
     )
-    text = models.TextField('Описание рецепта', blank=False, null=False)
+    text = models.TextField('Описание рецепта')
     cooking_time = models.PositiveIntegerField(
         'Время приготовления',
-        blank=False, null=False,
         validators=[
             MinValueValidator(MIN_TIME),
             MaxValueValidator(MAX_TIME)]
@@ -110,7 +100,8 @@ class Recipe(models.Model):
     short_code = models.CharField(max_length=8, unique=True)
 
     def save(self, *args, **kwargs):
-        self.short_code = self.generate_unique_shortcode()
+        if not self.short_code:
+            self.short_code = self.generate_unique_shortcode()
         super().save(*args, **kwargs)
 
     def generate_unique_shortcode(self):
@@ -189,7 +180,7 @@ class BaseFavoriteAndCartModel(models.Model):
         constraints = (
             models.UniqueConstraint(
                 fields=('user', 'recipe'),
-                name='unique_user_recipe'
+                name='unique_recipe_user_%(class)s'
             ),
         )
 
@@ -204,6 +195,6 @@ class FavoriteRecipe(BaseFavoriteAndCartModel):
 
 
 class ShoppingcartRecipe(BaseFavoriteAndCartModel):
-    class Meta:
+    class Meta(BaseFavoriteAndCartModel.Meta):
         verbose_name = 'покупка'
         verbose_name_plural = 'Покупки'

@@ -15,7 +15,6 @@ router.register('users', UserViewSet, basename='users')
 router.register('tags', TagViewSet, basename='tags')
 
 urlpatterns = [
-    re_path(r'^auth/', include('djoser.urls')),
     re_path(r'^auth/', include('djoser.urls.authtoken')),
     path('', include(router.urls))
 

@@ -40,7 +40,7 @@ class AvatarSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     """Сериализатор для пользователя."""
-    is_subscribed = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
@@ -186,8 +186,8 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 ingredient=ingredient,
                 amount=amount
             ))
-            RecipeIngredient.objects.bulk_create(ingredients_to_create,
-                                                 ignore_conflicts=True)
+        RecipeIngredient.objects.bulk_create(ingredients_to_create,
+                                             ignore_conflicts=True)
 
     @transaction.atomic
     def create(self, validated_data):
@@ -197,8 +197,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         ingredients_data = validated_data.pop('ingredients')
         try:
             recipe = Recipe.objects.create(**validated_data, author=author)
-            tags_id = [tag_data.id for tag_data in tags_data]
-            recipe.tags.set(Tag.objects.filter(id__in=tags_id))
+            recipe.tags.set(tags_data)
             self.add_ingredients(recipe, ingredients_data)
             return recipe
         except Exception as e:
@@ -214,8 +213,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             RecipeIngredient.objects.filter(recipe=instance).delete()
             self.add_ingredients(instance, ingredients_data)
             instance.tags.clear()
-            tags_id = [tag_data.id for tag_data in tags_data]
-            instance.tags.set(Tag.objects.filter(id__in=tags_id))
+            instance.tags.set(tags_data)
             return instance
         except Exception as e:
             raise ValidationError(f'Ошибка при создании рецепта: {str(e)}')

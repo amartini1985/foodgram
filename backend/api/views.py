@@ -171,14 +171,11 @@ class UserViewSet(DjoserUserViewSet):
         """Список подписок пользователя."""
         user = request.user
         followings = User.objects.filter(follower__user=user)
-        result = []
-        for following in followings:
-            serializer = UserSubscribeRecipesCountSerializer(
-                following,
-                context={'request': request,
-                         'recipes_limit': self.get_recipes_limit(request)}
-            )
-            result.append(serializer.data)
-        paginator = self.pagination_class()
-        paginated_result = paginator.paginate_queryset(result, request)
-        return paginator.get_paginated_response(paginated_result)
+        page = self.paginate_queryset(followings)
+        serializer = UserSubscribeRecipesCountSerializer(
+            page,
+            many=True,
+            context={'request': request,
+                     'recipes_limit': self.get_recipes_limit(request)}
+        )
+        return self.get_paginated_response(serializer.data)

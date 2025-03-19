@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.db import models
 
 from recipes.constants import (
+    LENGTH_SHORT_CODE,
     MAX_LENGTH_NAME_INGREDIENT,
     MAX_LENGTH_NAME_RECIPE,
     MAX_LENGTH_NAME_TAG,
@@ -43,7 +44,6 @@ class Tag(models.Model):
 
 class Ingredient(models.Model):
     name = models.CharField(
-        unique=True,
         max_length=MAX_LENGTH_NAME_INGREDIENT,
         verbose_name='Название'
     )
@@ -97,7 +97,7 @@ class Recipe(models.Model):
             MaxValueValidator(MAX_TIME)]
     )
     pub_date = models.DateTimeField('Дата пуликации', auto_now_add=True)
-    short_code = models.CharField(max_length=8, unique=True)
+    short_code = models.CharField(max_length=LENGTH_SHORT_CODE, unique=True)
 
     def save(self, *args, **kwargs):
         if not self.short_code:
@@ -110,7 +110,8 @@ class Recipe(models.Model):
             'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
         )
         while True:
-            code = ''.join(random.choice(allowed_chars) for _ in range(8))
+            code = ''.join(
+                random.choice(allowed_chars) for _ in range(LENGTH_SHORT_CODE))
             if not Recipe.objects.filter(short_code=code).exists():
                 break
         return code

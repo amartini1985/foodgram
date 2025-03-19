@@ -1,4 +1,5 @@
 """Константы для моделей рецептов"""
+LENGTH_SHORT_CODE = 8  # Для кода для короткой ссылки
 MAX_LENGTH_NAME_INGREDIENT = 128  # Максимальная длина поля name ингредиентов
 MAX_LENGTH_NAME_RECIPE = 256  # Максимальная длина поля name для recipe
 MAX_LENGTH_NAME_TAG = 128  # Максимальная длина поля name для tags

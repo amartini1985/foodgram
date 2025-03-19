@@ -69,9 +69,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeReadSerializer
         return RecipeWriteSerializer
 
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
-
     @action(detail=True, methods=['post', 'delete'], url_path='favorite')
     def favorite(self, request, pk=None):
         """Добавление рецепта в избранные."""
@@ -79,8 +76,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipe = get_object_or_404(Recipe, pk=pk)
         if request.method == 'POST':
             return add_recipe_to(user, recipe, FavoriteSerializer)
-        else:
-            return remove_recipe_from(user, recipe, FavoriteRecipe)
+        return remove_recipe_from(user, recipe, FavoriteRecipe)
 
     @action(detail=True, methods=['post', 'delete'], url_path='shopping_cart')
     def shopping_cart(self, request, pk=None):
@@ -89,8 +85,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipe = get_object_or_404(Recipe, pk=pk)
         if request.method == 'POST':
             return add_recipe_to(user, recipe, ShoppingcartSerializer)
-        else:
-            return remove_recipe_from(user, recipe, ShoppingcartRecipe)
+        return remove_recipe_from(user, recipe, ShoppingcartRecipe)
 
     @action(detail=True, methods=['get'], url_path='get-link')
     def short_link(self, request, pk=None):
@@ -138,8 +133,7 @@ class UserViewSet(DjoserUserViewSet):
             serializer.save()
             return Response({"avatar": serializer.data['avatar']},
                             status=status.HTTP_200_OK)
-        if user.avatar:
-            user.avatar.delete()
+        user.avatar.delete()
         user.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -157,7 +151,7 @@ class UserViewSet(DjoserUserViewSet):
                 context={'request': request})
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            return Response(serializer.data, status=201)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         Subscription.objects.filter(user=user, following=following)
         deleted_count, _ = Subscription.objects.filter(
             user=user, following=following).delete()
@@ -176,12 +170,11 @@ class UserViewSet(DjoserUserViewSet):
     def subscriptions(self, request):
         """Список подписок пользователя."""
         user = request.user
-        subscriptions = Subscription.objects.filter(user=user)
+        followings = User.objects.filter(follower__user=user)
         result = []
-        for subscription in subscriptions:
-            foll = get_object_or_404(User, email=subscription.following.email)
+        for following in followings:
             serializer = UserSubscribeRecipesCountSerializer(
-                foll,
+                following,
                 context={'request': request,
                          'recipes_limit': self.get_recipes_limit(request)}
             )
